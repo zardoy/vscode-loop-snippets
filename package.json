@@ -46,6 +46,9 @@
         "Repeat snippet",
         "Interactive snippet"
     ],
+    "activationEvents": [
+        "onCommands"
+    ],
     "scripts": {
         "start": "vscode-framework start"
     },
