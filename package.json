@@ -1,0 +1,69 @@
+{
+    "name": "loop-snippets",
+    "displayName": "Loop Snippets",
+    "description": "Unique and powerful REPEATABLE SNIPPETS that make you effective",
+    "publisher": "zardoy",
+    "version": "0.0.0-dev",
+    "license": "MIT",
+    "categories": [
+        "Snippets",
+        "Other"
+    ],
+    "contributes": {
+        "commands": [
+            {
+                "command": "insertLoopSnippet",
+                "title": "Insert Loop Snippet"
+            },
+            {
+                "command": "exitLoopSnippet",
+                "title": "Exit Loop Snippet"
+            }
+        ],
+        "configuration": {
+            "properties": {
+                "showExitMarker": {
+                    "type": "boolean",
+                    "description": "Experimental. Wether to show marker position, can be broken when newline are added. If disabled you need to exit loop mode manually with command",
+                    "default": true
+                }
+            }
+        },
+        "keybindings": [
+            {
+                "command": "loopSnippets.insertLoopSnippet",
+                "key": "tab",
+                "when": "editorTextFocus && inLoopSnippet"
+            },
+            {
+                "command": "loopSnippets.exitLoopSnippet",
+                "key": "escape",
+                "when": "editorTextFocus && inLoopSnippet && !selectionAnchorSet && !notificationCenterVisible && !parameterHintsVisible && !findWidgetVisible && !isInEmbeddedEditor && !renameInputVisible && !suggestWidgetVisible"
+            }
+        ]
+    },
+    "keywords": [
+        "Repeat snippet",
+        "Interactive snippet"
+    ],
+    "scripts": {
+        "start": "vscode-framework start"
+    },
+    "devDependencies": {
+        "@types/vscode": "1.71.0",
+        "@zardoy/tsconfig": "^1.5.0",
+        "@zardoy/vscode-utils": "^0.0.46",
+        "typescript": "^4.9.3",
+        "vscode-framework": "^0.0.18"
+    },
+    "prettier": {
+        "semi": false,
+        "singleQuote": true,
+        "proseWrap": "never",
+        "tabWidth": 4,
+        "trailingComma": "all",
+        "arrowParens": "avoid",
+        "printWidth": 160,
+        "endOfLine": "auto"
+    }
+}
