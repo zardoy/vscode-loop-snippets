@@ -1,7 +1,7 @@
 import { getExtensionSetting, registerExtensionCommand, showQuickPick } from 'vscode-framework'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 
-import { window, DecorationRangeBehavior, SnippetString, commands, Range, workspace } from 'vscode'
+import { window, DecorationRangeBehavior, SnippetString, commands, Range, workspace, Position } from 'vscode'
 import { Disposable } from 'vscode'
 
 export default () => {
@@ -30,7 +30,10 @@ export default () => {
             return
         }
 
-        let editorExpectedEndPos = editor.selection.active
+        const toOffset = (pos: Position) => editor.document.offsetAt(pos)
+        const toPos = (offset: number) => editor.document.positionAt(offset)
+
+        let expectedEndOffset = toOffset(editor.selection.active)
 
         type SimpleSnippetVariant = {
             wrap: string | undefined
@@ -80,7 +83,7 @@ export default () => {
             const snippetToInsert = firstInsert ? wrapSnippet : separator + wrapSnippet
             if (snippetToInsert) {
                 snippetJustInserted = true
-                void editor.insertSnippet(new SnippetString(snippetToInsert), firstInsert ? undefined : editorExpectedEndPos)
+                void editor.insertSnippet(new SnippetString(snippetToInsert), firstInsert ? undefined : toPos(expectedEndOffset))
             }
 
             firstInsert = false
@@ -103,7 +106,8 @@ export default () => {
 
         const updateDecoration = () => {
             if (!showExitMarker) return
-            editor.setDecorations(decoration, [{ range: new Range(editorExpectedEndPos, editorExpectedEndPos) }])
+            const pos = toPos(expectedEndOffset)
+            editor.setDecorations(decoration, [{ range: new Range(pos, pos) }])
         }
 
         if (!snippetCanExitByTyping) updateDecoration()
@@ -114,10 +118,11 @@ export default () => {
 
                 for (const contentChange of snippetJustInserted ? [contentChanges[0]!] : contentChanges) {
                     const { range } = contentChange
-                    const pos = range.start
-                    if (pos[snippetCanExitByTyping ? 'isBefore' : 'isBeforeOrEqual'](editorExpectedEndPos) || snippetJustInserted) {
-                        const diff = -(range.end.character - range.start.character) + contentChange.text.length
-                        editorExpectedEndPos = editorExpectedEndPos.translate(0, diff)
+                    const startOffset = toOffset(range.start)
+
+                    if (startOffset < expectedEndOffset || (!snippetCanExitByTyping && startOffset === expectedEndOffset) || snippetJustInserted) {
+                        const diff = -contentChange.rangeLength + contentChange.text.length
+                        expectedEndOffset += diff
                         updateDecoration()
                     }
                 }
@@ -132,7 +137,7 @@ export default () => {
                 if (textEditor !== editor || !snippetCanExitByTyping || snippetJustInserted) return
                 const sel = selections[0]!
                 if (!sel.start.isEqual(sel.end)) return
-                if (sel.start.isEqual(editorExpectedEndPos)) {
+                if (sel.start.isEqual(toPos(expectedEndOffset))) {
                     exitSnippetSession()
                 }
             },
