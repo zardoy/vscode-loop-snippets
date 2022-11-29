@@ -4,6 +4,7 @@
     "description": "Unique and powerful REPEATABLE SNIPPETS that make you effective",
     "publisher": "zardoy",
     "version": "0.0.0-dev",
+    "icon": "resources/icon.png",
     "license": "MIT",
     "categories": [
         "Snippets",
