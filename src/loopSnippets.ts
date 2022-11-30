@@ -41,19 +41,19 @@ export default () => {
         }
 
         const simpleSnippetVariants: Record<string, SimpleSnippetVariant> = {
-            "'|' | ": {
+            "'' | ": {
                 wrap: "'$1'",
                 separator: ' | ',
             },
-            '| && ': {
+            ' && ': {
                 wrap: undefined,
                 separator: ' && ',
             },
-            '| || ': {
+            ' || ': {
                 wrap: undefined,
                 separator: ' || ',
             },
-            '|, ': {
+            ', ': {
                 wrap: undefined,
                 separator: ', ',
             },
@@ -69,28 +69,32 @@ export default () => {
                       })),
                       {
                           title: 'Select simple loop snippet',
-                          placeHolder: '| - cursor placeHolder',
                       },
                   )
         if (!selectedVariant) return
         const { wrap: wrapSnippet = '', separator } = selectedVariant
         const showExitMarker = getExtensionSetting('showExitMarker')
+        const triggerCompletions = getExtensionSetting('triggerCompletions')
         const snippetCanExitByTyping = !showExitMarker || !!wrapSnippet
 
         let firstInsert = true
         let snippetJustInserted = false
-        const doInsert = () => {
+        const doInsert = async () => {
             const snippetToInsert = firstInsert ? wrapSnippet : separator + wrapSnippet
             if (snippetToInsert) {
                 snippetJustInserted = true
-                void editor.insertSnippet(new SnippetString(snippetToInsert), firstInsert ? undefined : toPos(expectedEndOffset))
+                await editor.insertSnippet(new SnippetString(snippetToInsert), firstInsert ? undefined : toPos(expectedEndOffset))
+            }
+
+            if (triggerCompletions) {
+                await commands.executeCommand('editor.action.triggerSuggest')
             }
 
             firstInsert = false
         }
 
         currentSnippetSessionHandle = () => {
-            doInsert()
+            void doInsert()
         }
 
         await commands.executeCommand('setContext', 'inLoopSnippet', true)
@@ -145,7 +149,7 @@ export default () => {
             currentSessionDisposables,
         )
 
-        doInsert()
+        void doInsert()
     })
 
     registerExtensionCommand('exitLoopSnippet', () => {

@@ -25,7 +25,12 @@
             "properties": {
                 "showExitMarker": {
                     "type": "boolean",
-                    "description": "Experimental. Wether to show marker position, can be broken when newline are added. If disabled you need to exit loop mode manually with command",
+                    "description": "Wether to show exit marker position. If disabled you need to exit loop mode manually with command",
+                    "default": true
+                },
+                "triggerCompletions": {
+                    "type": "boolean",
+                    "description": "Wether to trigger completinos after loop snippet insert (tab)",
                     "default": true
                 }
             }
