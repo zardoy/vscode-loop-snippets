@@ -1,7 +1,7 @@
 import { getExtensionSetting, registerExtensionCommand, showQuickPick } from 'vscode-framework'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 
-import { window, DecorationRangeBehavior, SnippetString, commands, Range, workspace, Position } from 'vscode'
+import { window, DecorationRangeBehavior, SnippetString, commands, Range, workspace, Position, Selection } from 'vscode'
 import { Disposable } from 'vscode'
 
 export default () => {
@@ -21,7 +21,17 @@ export default () => {
         rangeBehavior: DecorationRangeBehavior.ClosedClosed,
     })
 
-    registerExtensionCommand('insertLoopSnippet', async (_, arg?: { separator: string; wrap: string }) => {
+    type SimpleSnippetOptions = {
+        wrap: string | undefined
+        separator: string
+        /**
+         * If true, then snippet can be exited by typing
+         * @default false
+         */
+        onlyMidCompletions?: boolean
+    }
+
+    registerExtensionCommand('insertLoopSnippet', async (_, argSnippet?: Partial<SimpleSnippetOptions>) => {
         const editor = getActiveRegularEditor()
         if (!editor) return
 
@@ -33,17 +43,11 @@ export default () => {
         const toOffset = (pos: Position) => editor.document.offsetAt(pos)
         const toPos = (offset: number) => editor.document.positionAt(offset)
 
-        let expectedEndOffset = toOffset(editor.selection.active)
-
-        type SimpleSnippetVariant = {
-            wrap: string | undefined
-            separator: string
-        }
-
-        const simpleSnippetVariants: Record<string, SimpleSnippetVariant> = {
+        const simpleSnippetVariants: Record<string, SimpleSnippetOptions> = {
             "'' | ": {
                 wrap: "'$1'",
                 separator: ' | ',
+                onlyMidCompletions: true,
             },
             ' && ': {
                 wrap: undefined,
@@ -60,8 +64,8 @@ export default () => {
         }
 
         const selectedVariant =
-            arg?.separator !== undefined && arg.separator !== undefined
-                ? arg
+            argSnippet?.wrap !== undefined && argSnippet.separator !== undefined
+                ? argSnippet
                 : await showQuickPick(
                       Object.entries(simpleSnippetVariants).map(([key, value]) => ({
                           label: key,
@@ -72,12 +76,21 @@ export default () => {
                       },
                   )
         if (!selectedVariant) return
-        const { wrap: wrapSnippet = '', separator } = selectedVariant
+        // todo-low multicursor support
+        const selectedContentUsed = !selectedVariant.wrap && getExtensionSetting('useSelectedContentAsSnippet')
+        const defaultWrapSnippet = selectedContentUsed ? editor.document.getText(editor.selection) : ''
+        const { wrap: wrapSnippet = defaultWrapSnippet, separator, onlyMidCompletions } = selectedVariant
         const showExitMarker = getExtensionSetting('showExitMarker')
         const triggerCompletions = getExtensionSetting('triggerCompletions')
-        const snippetCanExitByTyping = !showExitMarker || !!wrapSnippet
+        const snippetCanExitByTyping = showExitMarker && !!onlyMidCompletions
 
-        let firstInsert = true
+        if (selectedContentUsed) {
+            editor.selection = new Selection(editor.selection.end, editor.selection.end)
+        }
+
+        /** controls seperator insertion */
+        let firstInsert = !selectedContentUsed
+        let expectedEndOffset = toOffset(editor.selection.active)
         let snippetJustInserted = false
         const doInsert = async () => {
             const snippetToInsert = firstInsert ? wrapSnippet : separator + wrapSnippet
@@ -87,7 +100,7 @@ export default () => {
             }
 
             if (triggerCompletions) {
-                await commands.executeCommand('editor.action.triggerSuggest')
+                void commands.executeCommand('editor.action.triggerSuggest')
             }
 
             firstInsert = false

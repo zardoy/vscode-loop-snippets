@@ -1,4 +1,3 @@
-
 {
     "configurations": [
         {
@@ -7,9 +6,11 @@
             "request": "launch",
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}/out",
-                "--disable-extensions"
+                // "--disable-extensions"
             ],
-            "outFiles": ["${workspaceFolder}/out/**/*.js"]
+            "outFiles": [
+                "${workspaceFolder}/out/**/*.js"
+            ]
         }
     ]
 }

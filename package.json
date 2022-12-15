@@ -32,6 +32,10 @@
                     "type": "boolean",
                     "description": "Wether to trigger completinos after loop snippet insert (tab)",
                     "default": true
+                },
+                "useSelectedContentAsSnippet": {
+                    "type": "boolean",
+                    "default": true
                 }
             }
         },
