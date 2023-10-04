@@ -36,6 +36,10 @@
                 "useSelectedContentAsSnippet": {
                     "type": "boolean",
                     "default": true
+                },
+                "selectedContentUseSnippet": {
+                    "type": "boolean",
+                    "default": false
                 }
             }
         },
